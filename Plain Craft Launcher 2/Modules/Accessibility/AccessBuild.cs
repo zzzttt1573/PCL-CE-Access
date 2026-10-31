@@ -8,6 +8,11 @@ namespace PCL;
 public static class AccessBuild
 {
     /// <summary>
+    /// 上游在启动页任意位置按回车都会启动游戏。无障碍版关闭此行为，只有焦点在启动按钮上时回车才启动。
+    /// </summary>
+    public const bool EnterLaunchesAnywhere = false;
+
+    /// <summary>
     /// 上游的更新包不包含无障碍功能，安装后会覆盖本程序，因此禁止自我更新。
     /// </summary>
     /// <param name="notifyUser">是否提示用户（用户手动点击更新时为 true）。</param>

@@ -44,7 +44,8 @@ public sealed class AccessPeer(FrameworkElement owner)
 {
     private IAccessibleControl Control => (IAccessibleControl)Owner;
 
-    protected override AutomationControlType GetAutomationControlTypeCore() => Control.AccessControlType;
+    protected override AutomationControlType GetAutomationControlTypeCore() =>
+        AccessList.GetRoleFor(Owner) ?? Control.AccessControlType;
 
     protected override string GetClassNameCore() => Owner.GetType().Name;
 

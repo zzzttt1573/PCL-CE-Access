@@ -776,7 +776,8 @@ public partial class FormMain
         }
 
         // 调用启动游戏
-        if (e.Key == Key.Enter && pageCurrent == PageType.Launch)
+        // 无障碍版：只有焦点在启动按钮上时才用回车启动（由按钮自己处理），避免在启动页任意位置误触
+        if (AccessBuild.EnterLaunchesAnywhere && e.Key == Key.Enter && pageCurrent == PageType.Launch)
         {
             if (ModMain.isAprilEnabled && !ModMain.isAprilGiveup)
                 HintService.Hint(Lang.Text("Main.April.Nope"));

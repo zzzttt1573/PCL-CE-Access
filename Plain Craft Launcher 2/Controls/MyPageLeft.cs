@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace PCL;
 
-public class MyPageLeft : Grid
+public partial class MyPageLeft : Grid
 {
     public static DependencyProperty AnimatedControlProperty =
         DependencyProperty.Register("AnimatedControl", typeof(FrameworkElement), typeof(MyPageLeft));
