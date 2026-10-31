@@ -6,7 +6,7 @@ using System.Windows.Input;
 using PCL.Core.App.Localization;
 namespace PCL;
 
-public class MyComboBox : ComboBox
+public partial class MyComboBox : ComboBox
 {
     public delegate void TextChangedEventHandler(object sender, TextChangedEventArgs e);
 

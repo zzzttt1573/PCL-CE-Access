@@ -8,7 +8,7 @@ using FluentValidation;
 using PCL.Core.App.Localization;
 namespace PCL;
 
-public class MyTextBox : TextBox
+public partial class MyTextBox : TextBox
 {
     public delegate void ValidateChangedEventHandler(object sender, EventArgs e);
 

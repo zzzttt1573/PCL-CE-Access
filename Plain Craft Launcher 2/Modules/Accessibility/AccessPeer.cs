@@ -2,7 +2,9 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace PCL;
@@ -211,6 +213,97 @@ public static class AccessHelper
         var key = svgIcon[(svgIcon.LastIndexOf('/') + 1)..];
         return iconNames.GetValueOrDefault(key);
     }
+
+    /// <summary>
+    /// 查找控件旁边的标签文字。PCL 的设置项一般是「Grid 同一行，左列 TextBlock，右列控件」，
+    /// 也有横向 StackPanel 里「TextBlock 在前，控件在后」的写法。会向上找几层父元素，但不越过卡片。
+    /// </summary>
+    public static string? FindLabel(FrameworkElement element)
+    {
+        DependencyObject current = element;
+        for (var level = 0; level < 4; level++)
+        {
+            var parent = VisualTreeHelper.GetParent(current) ?? LogicalTreeHelper.GetParent(current);
+            if (parent is null || current is not UIElement currentElement) break;
+            switch (parent)
+            {
+                case Grid grid:
+                {
+                    var row = Grid.GetRow(currentElement);
+                    var column = Grid.GetColumn(currentElement);
+                    string? best = null;
+                    var bestColumn = -1;
+                    foreach (UIElement child in grid.Children)
+                    {
+                        var childColumn = Grid.GetColumn(child);
+                        if (Grid.GetRow(child) != row || childColumn >= column || childColumn <= bestColumn)
+                            continue;
+                        // 标签可能是单独的 TextBlock，也可能是横向 StackPanel 里的第一个 TextBlock（后面跟着重置按钮等）
+                        var text = child switch
+                        {
+                            TextBlock textBlock when IsLabelText(textBlock) => textBlock.Text,
+                            StackPanel { Orientation: Orientation.Horizontal, Visibility: Visibility.Visible } stack =>
+                                stack.Children.OfType<TextBlock>().FirstOrDefault(IsLabelText)?.Text,
+                            _ => null
+                        };
+                        if (text is null) continue;
+                        best = text;
+                        bestColumn = childColumn;
+                    }
+
+                    if (best is not null) return best.Trim();
+                    break;
+                }
+                case StackPanel { Orientation: Orientation.Horizontal } panel:
+                {
+                    for (var i = panel.Children.IndexOf(currentElement) - 1; i >= 0; i--)
+                        if (panel.Children[i] is TextBlock textBlock && IsLabelText(textBlock))
+                            return textBlock.Text.Trim();
+                    break;
+                }
+            }
+
+            if (parent is MyCard or Page or Window) break;
+            current = parent;
+        }
+
+        return null;
+    }
+
+    private static bool IsLabelText(TextBlock textBlock) =>
+        textBlock.Visibility == Visibility.Visible && !string.IsNullOrWhiteSpace(textBlock.Text) &&
+        textBlock.Text.Any(char.IsLetterOrDigit);
+
+    /// <summary>
+    /// 计算文本框的名称。
+    /// </summary>
+    public static string? TextBoxName(MyTextBox textBox)
+    {
+        // 可编辑下拉框内部的文本框，使用下拉框的名称
+        if (textBox.TemplatedParent is MyComboBox comboBox) return ComboBoxName(comboBox);
+        // 搜索框内部的文本框
+        DependencyObject? current = textBox;
+        for (var i = 0; i < 4 && current is not null; i++)
+        {
+            current = VisualTreeHelper.GetParent(current);
+            if (current is MySearchBox searchBox)
+                return NonEmpty(searchBox.HintText) ?? "搜索";
+        }
+
+        return FindLabel(textBox) ?? NonEmpty(textBox.HintText) ?? ShortToolTip(textBox.ToolTip);
+    }
+
+    /// <summary>
+    /// 计算下拉框的名称。
+    /// </summary>
+    public static string? ComboBoxName(MyComboBox comboBox) =>
+        FindLabel(comboBox) ?? NonEmpty(comboBox.HintText) ?? ShortToolTip(comboBox.ToolTip);
+
+    private static string? NonEmpty(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+
+    // 长提示本来就会作为说明文字朗读，不适合再当名称
+    private static string? ShortToolTip(object? toolTip) =>
+        NonEmpty(ToolTipText(toolTip)) is { Length: <= 20 } text ? text : null;
 
     /// <summary>
     /// 从 ToolTip 中取出文本。

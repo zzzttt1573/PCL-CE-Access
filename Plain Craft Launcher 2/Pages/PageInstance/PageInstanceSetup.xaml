@@ -142,6 +142,7 @@
                             Grid.Row="3" Grid.Column="1"
                             IsEnabled="False"
                             x:Name="SliderRamCustom"
+                            AutomationProperties.Name="自定义游戏内存"
                             Tag="VersionRamCustom"
                             MaxValue="49"
                             Value="13"

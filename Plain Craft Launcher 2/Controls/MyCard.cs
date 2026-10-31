@@ -9,7 +9,7 @@ using PCL.Core.UI.Controls;
 
 namespace PCL;
 
-public class MyCard : AnimatedBackgroundGrid
+public partial class MyCard : AnimatedBackgroundGrid
 {
     // 动画
     private const double dropShadowIdleOpacity = 0.07d;
