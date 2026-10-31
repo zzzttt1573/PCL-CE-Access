@@ -772,14 +772,16 @@ public partial class PageSetupUI
                     : Visibility.Visible;
                 ModMain.frmSetupLeft.ItemJava.Visibility =
                     !HiddenForceShow && conf.SetupJava ? Visibility.Collapsed : Visibility.Visible;
-                ModMain.frmSetupLeft.ItemUpdate.Visibility =
-                    !HiddenForceShow && conf.SetupUpdate ? Visibility.Collapsed : Visibility.Visible;
+                // 无障碍版：始终隐藏「软件更新」和「反馈」
+                ModMain.frmSetupLeft.ItemUpdate.Visibility = AccessBuild.HideUpdateAndFeedback ||
+                    (!HiddenForceShow && conf.SetupUpdate) ? Visibility.Collapsed : Visibility.Visible;
                 ModMain.frmSetupLeft.ItemGameLink.Visibility = !HiddenForceShow && conf.SetupGameLink
                     ? Visibility.Collapsed
                     : Visibility.Visible;
                 ModMain.frmSetupLeft.ItemAbout.Visibility =
                     !HiddenForceShow && conf.SetupAbout ? Visibility.Collapsed : Visibility.Visible;
-                ModMain.frmSetupLeft.ItemFeedback.Visibility = !HiddenForceShow && conf.SetupFeedback
+                ModMain.frmSetupLeft.ItemFeedback.Visibility = AccessBuild.HideUpdateAndFeedback ||
+                    (!HiddenForceShow && conf.SetupFeedback)
                     ? Visibility.Collapsed
                     : Visibility.Visible;
                 ModMain.frmSetupLeft.ItemLog.Visibility =

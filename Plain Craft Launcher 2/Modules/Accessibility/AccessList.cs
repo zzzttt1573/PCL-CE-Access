@@ -344,6 +344,7 @@ public partial class FormMain
             AccessText.WatchWindow(this, PanMain, PanMsg);
             WatchFocusLoss();
             FocusLaunchButtonOnStartup();
+            AccessBuild.ShowAboutHintOnStartup();
         }
         catch (Exception ex)
         {
