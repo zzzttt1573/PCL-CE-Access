@@ -18,6 +18,11 @@ public static class AccessBuild
     public const bool HideUpdateAndFeedback = true;
 
     /// <summary>
+    /// 首次创建档案时允许直接选择第三方验证或离线验证。
+    /// </summary>
+    public const bool AllowAllLoginTypesOnFirstUse = true;
+
+    /// <summary>
     /// 无障碍版信息，替代原来的更新提示。
     /// </summary>
     public const string AboutHint = "无障碍版本作者：Dravokian，交流QQ群：704724210";

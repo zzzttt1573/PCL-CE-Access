@@ -61,6 +61,7 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 7. **只有焦点在启动按钮上时回车才启动游戏**；启动后默认焦点放在启动按钮上，有弹窗时等弹窗关闭。
 8. **禁用自动更新**：上游更新包不含无障碍功能，安装后会覆盖本程序（曾经实际发生过）。
 9. **隐藏设置页的「软件更新」「反馈」**；启动时显示「无障碍版本作者：Dravokian，交流QQ群：704724210」。
+10. **首次创建档案不强制正版验证**：可以直接选择正版验证、第三方验证或离线验证；启动前与正版购买相关的劝导仍按上游逻辑保留。
 
 ### 2.1 许可证要求（发布前必须满足）
 
@@ -135,6 +136,8 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 | `Modules/UI/HintService.cs`（`Hint` 方法） | 加 `AccessSpeech.Speak(normalized);` | 右下角提示自动朗读 |
 | `Controls/MyScrollViewer.cs`（`MyScrollViewer_PreviewGotKeyboardFocus`） | 条件加 `&& InputManager.Current.MostRecentInputDevice is MouseDevice` | 上游（#3854）禁止滑块获得焦点，导致 Tab 卡在滑块前；改为只在鼠标点击时禁止 |
 | `Pages/PageSetup/PageSetupUI.xaml.cs`（功能隐藏刷新） | `ItemUpdate`、`ItemFeedback` 的可见性加 `AccessBuild.HideUpdateAndFeedback ||` | 始终隐藏「软件更新」「反馈」 |
+| `Modules/Minecraft/ModProfile.cs`（`CreateProfile`） | 使用 `AccessBuild.AllowAllLoginTypesOnFirstUse` 启用全部验证类型 | 不要求先完成一次正版验证，首次即可选择第三方或离线验证 |
+| `Pages/PageLaunch/PageLoginProfile.xaml(.cs)` | 删除 `HintMicrosoft` 提示及其可见性刷新 | 不再显示「需要先进行一次正版验证」 |
 
 ### 4.3 XAML 修改
 
@@ -258,6 +261,7 @@ powershell.exe -NoProfile -File AccessTools\uia-keys.ps1 -ProcessId $p.Id -KeyLi
 ### 7.2 人工测试清单（NVDA）
 
 - [ ] 启动：焦点在启动按钮，读出「启动游戏 / 下载游戏 按钮」和版本说明；有弹窗时焦点在弹窗，正文被朗读。
+- [ ] 清除档案后首次新建：验证类型中可直接选择正版、第三方或离线验证，且不显示必须先行正版验证的提示。
 - [ ] Tab 只在顶部、左侧、右侧之间循环；顶部和左侧进入时落在选中项。
 - [ ] 下载页左侧：上下键移动，分类标题朗读为标题；左右键到「刷新」按钮再回来。
 - [ ] 实例选择左侧：右键到「设置」，回车打开菜单，上下选择，Esc 回到按钮。
