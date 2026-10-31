@@ -163,3 +163,15 @@ public sealed class MySliderAccessPeer(MySlider owner)
     bool IValueProvider.IsReadOnly => true;
     void IValueProvider.SetValue(string value) => throw new InvalidOperationException("请使用方向键调整");
 }
+
+public partial class MySearchBox
+{
+    static MySearchBox() => EventManager.RegisterClassHandler(typeof(MySearchBox), LoadedEvent,
+        new RoutedEventHandler((sender, _) =>
+        {
+            // 清空按钮平时是隐藏的（透明且不响应鼠标），不应成为 Tab 停留点；清空可以用 Ctrl+A 再删除
+            var box = (MySearchBox)sender;
+            KeyboardNavigation.SetIsTabStop(box.BtnClear, false);
+            AutomationProperties.SetName(box.BtnClear, "清空搜索");
+        }));
+}

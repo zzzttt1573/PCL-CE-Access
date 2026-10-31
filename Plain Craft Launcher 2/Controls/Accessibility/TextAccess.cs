@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -40,6 +41,39 @@ public static class AccessText
     /// </summary>
     public static void ScanLater(FrameworkElement root) =>
         root.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => Scan(root));
+
+    private static bool windowScanScheduled;
+
+    /// <summary>
+    /// 有些内容是加载之后才显示或生成的（例如联机大厅的条款卡片），只在加载时扫描会漏掉。
+    /// 主窗口布局变化时，节流地重新扫描整个窗口里新出现的文字（已处理过的文字会直接跳过）。
+    /// </summary>
+    public static void WatchWindow(Window window, params DependencyObject[] roots)
+    {
+        window.LayoutUpdated += (_, _) =>
+        {
+            if (windowScanScheduled) return;
+            windowScanScheduled = true;
+            var timer = new DispatcherTimer(DispatcherPriority.Background, window.Dispatcher)
+            {
+                Interval = TimeSpan.FromMilliseconds(400)
+            };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                windowScanScheduled = false;
+                try
+                {
+                    foreach (var root in roots) Scan(root);
+                }
+                catch (Exception ex)
+                {
+                    ModBase.Log(ex, "[Access] 扫描窗口文字失败");
+                }
+            };
+            timer.Start();
+        };
+    }
 
     private static void Scan(DependencyObject root)
     {
@@ -94,6 +128,8 @@ public static class AccessText
     private static bool IsStandaloneText(TextBlock textBlock)
     {
         if (textBlock.TemplatedParent is not null) return false;
+        // 明确设置了不作为 Tab 停留点的文字（例如已作为按钮说明的文字）
+        if (!KeyboardNavigation.GetIsTabStop(textBlock)) return false;
 
         MyCard? card = null;
         DependencyObject? current = textBlock;
@@ -128,9 +164,17 @@ public static class AccessText
     /// <summary>
     /// 左侧导航里的分类标题（例如「游戏」「启动器」）：与导航列表项排在同一个纵向列表里。
     /// </summary>
-    private static bool IsNavigationHeading(TextBlock textBlock) =>
-        VisualTreeHelper.GetParent(textBlock) is StackPanel { Orientation: Orientation.Vertical } stack &&
-        stack.Children.OfType<MyListItem>().Any();
+    private static bool IsNavigationHeading(TextBlock textBlock)
+    {
+        if (VisualTreeHelper.GetParent(textBlock) is not StackPanel { Orientation: Orientation.Vertical } stack ||
+            !stack.Children.OfType<MyListItem>().Any())
+            return false;
+        // 只在左侧页面里算导航分类标题；右侧卡片里与列表项排在一起的说明文字要保留
+        for (DependencyObject? current = stack; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (current is MyPageLeft)
+                return true;
+        return false;
+    }
 
     /// <summary>
     /// 是否是某个控件的标签：同一行右侧有非文字元素，或者在横向排列中后面跟着控件。
@@ -168,6 +212,31 @@ public static class AccessDialog
 {
     public static void AnnounceLater(FrameworkElement dialog, Func<string?> getTitle, Func<string?> getBody)
     {
+        // 记住打开弹窗前的焦点，弹窗关闭后焦点如果丢了就放回去
+        var previousFocus = Keyboard.FocusedElement as UIElement;
+        if (previousFocus is not null && dialog.IsAncestorOf(previousFocus)) previousFocus = null;
+        RoutedEventHandler? onUnloaded = null;
+        onUnloaded = (_, _) =>
+        {
+            dialog.Unloaded -= onUnloaded;
+            dialog.Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
+            {
+                var window = ModMain.frmMain;
+                if (window is null || window.PanMsg.Children.Count > 0) return; // 还有下一个弹窗
+                if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, window) &&
+                    focused.IsVisible) return;
+                if (previousFocus is { IsVisible: true }) previousFocus.Focus();
+            });
+        };
+        dialog.Unloaded += onUnloaded;
+
+        // 弹窗打开时焦点必须在弹窗里，否则读屏用户不知道有弹窗，Tab 也会落到弹窗后面的页面上
+        dialog.Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
+        {
+            if (!dialog.IsVisible || dialog.IsKeyboardFocusWithin) return;
+            AccessList.GetItems(dialog).FirstOrDefault()?.Focus();
+        });
+
         var timer = new DispatcherTimer(DispatcherPriority.Background, dialog.Dispatcher)
         {
             Interval = TimeSpan.FromMilliseconds(600)

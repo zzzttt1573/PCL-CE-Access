@@ -236,12 +236,75 @@ public partial class FormMain
                 KeyboardNavigation.SetTabIndex(region, index);
             }
 
+            // 弹窗打开期间，Tab 只在弹窗内循环
+            KeyboardNavigation.SetTabNavigation(PanMsg, KeyboardNavigationMode.Cycle);
+            KeyboardNavigation.SetDirectionalNavigation(PanMsg, KeyboardNavigationMode.Cycle);
+
+            // 标题栏不扫描，避免标题文字变成多余的 Tab 停留点
+            AccessText.WatchWindow(this, PanMain, PanMsg);
+            WatchFocusLoss();
             FocusLaunchButtonOnStartup();
         }
         catch (Exception ex)
         {
             ModBase.Log(ex, "[Access] 设置主窗口键盘导航失败");
         }
+    }
+
+    private UIElement? accessLastFocusRegion;
+    private bool accessFocusCheckScheduled;
+
+    /// <summary>
+    /// 获得焦点的控件被移除或隐藏（例如关闭了一张卡片）时，焦点会落到窗口本身，读屏只能读出窗口标题。
+    /// 记住焦点最后所在的区域（顶部导航、左侧、右侧），焦点丢失时放回同一区域：列表区域放到选中项，其他区域放到第一个控件。
+    /// </summary>
+    private void WatchFocusLoss()
+    {
+        var regions = new UIElement[]
+        {
+            PanTitleSelect,
+            (UIElement)VisualTreeHelper.GetParent(PanMainLeft),
+            (UIElement)VisualTreeHelper.GetParent(PanMainRight)
+        };
+        AddHandler(Keyboard.GotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler((_, e) =>
+        {
+            if (e.NewFocus is not DependencyObject focused) return;
+            var region = regions.FirstOrDefault(r => r.IsAncestorOf(focused));
+            if (region is not null) accessLastFocusRegion = region;
+        }), true);
+
+        LayoutUpdated += (_, _) =>
+        {
+            if (accessFocusCheckScheduled) return;
+            accessFocusCheckScheduled = true;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, () =>
+            {
+                accessFocusCheckScheduled = false;
+                try
+                {
+                    RestoreLostFocus();
+                }
+                catch (Exception ex)
+                {
+                    ModBase.Log(ex, "[Access] 恢复丢失的焦点失败");
+                }
+            });
+        };
+    }
+
+    private void RestoreLostFocus()
+    {
+        if (!IsActive || accessLastFocusRegion is null) return;
+        if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any()) return;
+        if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, this) && focused.IsVisible &&
+            IsAncestorOf(focused))
+            return;
+        var items = AccessList.GetItems(accessLastFocusRegion);
+        var target = items.FirstOrDefault(item => item is IAccessibleControl { AccessIsSelected: true })
+                     ?? items.FirstOrDefault();
+        if (target is null) return;
+        (target as FrameworkElement)?.BringIntoView();
+        target.Focus();
     }
 
     /// <summary>
@@ -300,11 +363,62 @@ public partial class MyPageLeft
     {
         Loaded += (_, _) => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
         {
-            var hasNavigation = HasNavigationItem(this);
-            if (!hasNavigation) return;
-            AccessList.SetIsList(this, true);
-            AccessList.SetItemRole(this, System.Windows.Automation.Peers.AutomationControlType.ListItem);
+            if (HasNavigationItem(this))
+            {
+                AccessList.SetIsList(this, true);
+                AccessList.SetItemRole(this, System.Windows.Automation.Peers.AutomationControlType.ListItem);
+            }
+
+            RestoreFocusIfLost();
         });
+    }
+
+    /// <summary>
+    /// 切换大页面时，原来获得焦点的控件随旧页面一起消失，焦点会落到窗口本身。
+    /// 这种情况下把焦点放到新左侧页面的当前选中项（没有选中项时放到第一个控件）。
+    /// 旧页面的退出动画期间焦点控件可能还可见，所以多检查几次。
+    /// </summary>
+    private void RestoreFocusIfLost()
+    {
+        var ticks = 0;
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        timer.Tick += (_, _) =>
+        {
+            try
+            {
+                var window = ModMain.frmMain;
+                if (++ticks > 8 || window is null || !IsLoaded || !window.IsActive)
+                {
+                    timer.Stop();
+                    return;
+                }
+
+                // 有弹窗时焦点交给弹窗，弹窗关闭后再看
+                if (window.PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any()) return;
+                if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, window) &&
+                    focused.IsVisible && window.IsAncestorOf(focused))
+                {
+                    timer.Stop();
+                    return;
+                }
+
+                var items = AccessList.GetItems(this);
+                UIElement? target = this is PageLaunchLeft launch && launch.BtnLaunch.IsEnabled
+                    ? launch.BtnLaunch
+                    : items.FirstOrDefault(item => item is IAccessibleControl { AccessIsSelected: true })
+                      ?? items.FirstOrDefault();
+                if (target is null) return;
+                timer.Stop();
+                (target as FrameworkElement)?.BringIntoView();
+                target.Focus();
+            }
+            catch (Exception ex)
+            {
+                timer.Stop();
+                ModBase.Log(ex, "[Access] 恢复焦点失败");
+            }
+        };
+        timer.Start();
     }
 
     private static bool HasNavigationItem(DependencyObject parent)

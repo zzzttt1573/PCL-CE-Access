@@ -42,6 +42,7 @@
                             Click="BtnLaunch_Click"
                             Padding="30,0,30,15" IsEnabled="False" />
             <TextBlock x:Name="LabVersion" Text="{DynamicResource Launch.Home.VersionList.Loading}" Margin="35,0,35,10" IsHitTestVisible="False"
+                       KeyboardNavigation.IsTabStop="False"
                        VerticalAlignment="Bottom" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
                        FontSize="11" Foreground="{DynamicResource ColorBrushGray3}" RenderTransformOrigin="0.5,-0.2">
                 <TextBlock.RenderTransform>

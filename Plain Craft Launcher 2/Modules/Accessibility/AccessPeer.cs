@@ -284,11 +284,14 @@ public static class AccessHelper
         if (textBox.TemplatedParent is MyComboBox comboBox) return ComboBoxName(comboBox);
         // 搜索框内部的文本框
         DependencyObject? current = textBox;
-        for (var i = 0; i < 4 && current is not null; i++)
+        for (var i = 0; i < 12 && current is not null; i++)
         {
             current = VisualTreeHelper.GetParent(current);
             if (current is MySearchBox searchBox)
                 return NonEmpty(searchBox.HintText) ?? "搜索";
+            // 输入弹窗里的文本框，使用弹窗标题
+            if (current is MyMsgInput input)
+                return NonEmpty(input.LabTitle.Text);
         }
 
         return FindLabel(textBox) ?? NonEmpty(textBox.HintText) ?? ShortToolTip(textBox.ToolTip);
