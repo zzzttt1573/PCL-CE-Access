@@ -23,6 +23,7 @@ public static class HintService
         var normalized = (text ?? "").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " ");
         if (HintWaiting.Any(h => h.Text == normalized && h.Type == type)) return;
         HintWaiting.Add(new HintMessage { Text = normalized, Type = type, Log = log });
+        AccessSpeech.Speak(normalized); // 无障碍：朗读右下角提示
     }
 
     public static void HintWrapper_OnShow(string message, HintTheme messageTheme)

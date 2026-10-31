@@ -72,6 +72,8 @@ public static class UpdateManager
 
     public static void UpdateStart(UpdateEnums.UpdateType type, string receivedKey = null, bool forceValidated = false)
     {
+        // 无障碍版：上游更新包不含无障碍功能，禁止下载和安装
+        if (AccessBuild.BlockSelfUpdate(type != UpdateEnums.UpdateType.Silent)) return;
         var dlTargetPath = ModBase.exePath + @"PCL\Plain Craft Launcher Community Edition.exe";
         ModBase.RunInNewThread(() =>
         {
@@ -165,6 +167,7 @@ public static class UpdateManager
 
     public static void UpdateRestart(bool triggerRestartAndByEnd, bool triggerRestart = true)
     {
+        if (AccessBuild.BlockSelfUpdate(false)) return;
         try
         {
             var fileName = ModBase.exePath + @"PCL\Plain Craft Launcher Community Edition.exe";

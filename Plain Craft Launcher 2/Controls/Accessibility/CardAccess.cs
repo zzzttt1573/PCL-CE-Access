@@ -62,6 +62,8 @@ public partial class MyCard
         IsSwapped = swapped;
         ModBase.Log("[Control] " + (IsSwapped ? "折叠卡片" : "展开卡片") + (Title is null ? "" : "：" + Title));
         Swap?.Invoke(this, e);
+        // 展开时可能动态生成内容，重新扫描里面的文字
+        if (!swapped) AccessText.ScanLater(this);
 
         var peer = UIElementAutomationPeer.FromElement(this);
         peer?.RaisePropertyChangedEvent(ExpandCollapsePatternIdentifiers.ExpandCollapseStateProperty,

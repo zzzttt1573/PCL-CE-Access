@@ -38,6 +38,7 @@
                 </TransformGroup>
             </Grid.RenderTransform>
             <local:MyButton x:Name="BtnLaunch" Height="54" Margin="20,0" Text="{DynamicResource Launch.Home.Button.Loading}" ColorType="Highlight"
+                            AutomationProperties.HelpText="{Binding Text, ElementName=LabVersion}"
                             Click="BtnLaunch_Click"
                             Padding="30,0,30,15" IsEnabled="False" />
             <TextBlock x:Name="LabVersion" Text="{DynamicResource Launch.Home.VersionList.Loading}" Margin="35,0,35,10" IsHitTestVisible="False"
