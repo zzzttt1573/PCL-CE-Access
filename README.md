@@ -1,73 +1,99 @@
-**简体中文** | [English](README-EN.md) | [繁體中文](README-ZH_TW.md)
+# PCL CE 无障碍版（PCL CE Access）
 
-<div align="center">
+PCL CE 无障碍版是**第三方**基于 [PCL 社区版（PCL CE）](https://github.com/PCL-Community/PCL-CE) v2.15.0 独立二次创作的产物，目标是让视障玩家用屏幕朗读软件（读屏）浏览和操作 Minecraft 启动器。
 
-<img src="Plain Craft Launcher 2/Images/icon.ico" alt="Logo" width="80" height="80">
+本项目与 PCL 原作者龙腾猫跃、PCL Community、Mojang 和 Microsoft 没有从属关系，也不由他们提供支持。使用中遇到的问题，请到下面的无障碍版交流群反馈，**不要**向 PCL 或 PCL CE 的官方仓库反馈。
 
-# PCL Community Edition
+- 无障碍版作者：Dravokian
+- 交流 QQ 群：704724210
+- 上游 PCL CE 的原始说明：[README-PCL-CE.md](README-PCL-CE.md)
 
-[![Stars](https://img.shields.io/github/stars/PCL-Community/PCL-CE?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTTggLjI1YS43NS43NSAwIDAgMSAuNjczLjQxOGwxLjg4MiAzLjgxNSA0LjIxLjYxMmEuNzUuNzUgMCAwIDEgLjQxNiAxLjI3OWwtMy4wNDYgMi45Ny43MTkgNC4xOTJhLjc1MS43NTEgMCAwIDEtMS4wODguNzkxTDggMTIuMzQ3bC0zLjc2NiAxLjk4YS43NS43NSAwIDAgMS0xLjA4OC0uNzlsLjcyLTQuMTk0TC44MTggNi4zNzRhLjc1Ljc1IDAgMCAxIC40MTYtMS4yOGw0LjIxLS42MTFMNy4zMjcuNjY4QS43NS43NSAwIDAgMSA4IC4yNVoiIGZpbGw9IiNlYWM1NGYiLz48L3N2Zz4=&logoSize=auto&label=stars&labelColor=444444&color=eac54f)](https://github.com/PCL-Community/PCL-CE/)
-![GitHub Release](https://img.shields.io/github/v/release/PCL-Community/PCL-CE?label=release&logo=github&style=for-the-badge)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/PCL-Community/PCL-CE/build-test.yml?style=for-the-badge)
+## 主要功能
 
-[![Issues](https://img.shields.io/github/issues/PCL-Community/PCL-CE?style=for-the-badge&label=issues&labelColor=444444&color=1F883D&logo=github)](https://github.com/PCL-Community/PCL-CE/issues)
-[![Pull requests](https://img.shields.io/github/issues-pr/PCL-Community/PCL-CE?style=for-the-badge&label=pull%20requests&labelColor=444444&color=1F883D&logo=github)](https://github.com/PCL-Community/PCL-CE/pulls)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/PCL-Community/PCL-CE/total?style=for-the-badge)
-[![哔哩哔哩](https://img.shields.io/badge/动态-bilibili-00A4DB?style=for-the-badge&labelColor=444444&logo=bilibili)](https://space.bilibili.com/3546847192811755/dynamic) <br />
+- 启动器里的按钮、复选框、单选框、列表项、输入框、下拉框、滑块都能被读屏识别，读出名称、状态和说明。
+- 设置项会读出旁边的标签文字，例如「默认实例隔离 组合框」；滑块会读出带单位的数值，例如「最大线程数 滑块 64」。
+- 卡片读作带标题的分组，进入卡片时先读标题，用来区分不同卡片里同名的设置项。
+- 说明文字、提示条、弹窗正文都可以用 Tab 键读到。
+- 弹窗出现时焦点自动进入弹窗，并读出标题和正文；关闭后焦点回到原来的位置。
+- 右下角的提示消息会自动朗读。
+- 模组、整合包等资源会读出名称、支持的加载器和版本、下载量、更新时间、来源、标签和简介。
+- 实例列表会读出游戏版本和加载器，例如「26.2，Fabric 0.19.3」。
+- NVDA 运行时直接调用 NVDA 朗读；没有运行 NVDA 时通过 UIA 通知交给其他读屏软件（例如讲述人）。
 
-<a href="https://trendshift.io/repositories/21800?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-21800" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/21800/weekly?language=C%23" alt="PCL-Community%2FPCL-CE | Trendshift" width="250" height="55"/></a>
-<a href="https://trendshift.io/repositories/21800" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/21800" alt="PCL-Community%2FPCL-CE | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+主要用 NVDA 测试，其他支持 UI 自动化（UIA）的读屏软件也可以使用。
 
-[社区版下载](https://github.com/PCL-Community/PCL-CE/releases/latest) |
-[上游存储库](https://github.com/Meloong-Git/PCL)
+## 键盘操作
 
-[提交问题](https://github.com/PCL-Community/PCL-CE/issues/new/choose) |
-[贡献指南](https://github.com/PCL-Community/PCL-CE/wiki/开发指南)
+### 整体结构
 
-</div>
+窗口分为三个区域：**顶部导航、左侧、右侧**。
 
-PCL CE 是基于 PCL 开源代码二次开发的社区版本，包括了主线暂未制作的功能和改进！
+| 按键 | 作用 |
+| --- | --- |
+| Tab / Shift+Tab | 在顶部导航、左侧、右侧之间切换；在右侧区域里逐个移动控件 |
+| Esc | 返回上一级；在弹窗里相当于取消 |
+| 回车 / 空格 | 激活当前按钮、选择当前列表项、勾选复选框 |
 
-社区版的版本号与主线并非严格对应关系，也请不要向官方仓库反馈社区版问题。
+### 顶部导航和左侧列表
 
-欢迎大家来用用看！
+顶部导航（启动、下载、设置、工具）和左侧导航都是**列表**，整个列表只占一个 Tab 停留点。从别处按 Tab 进入时，焦点会落在当前选中的那一项上。
 
-**开发群:** [599620549](https://qm.qq.com/q/PNQA4Md8wc)[✦](https://t.me/+78XW2bUOvKJjMTZl) | **用户 1 群:** [1028074835](https://qm.qq.com/q/qrMGJo8BQQ) | **用户 2 群:** [1070029541](https://qm.qq.com/q/lBywbDMWhG)
+| 按键 | 顶部导航 | 左侧列表 |
+| --- | --- | --- |
+| 上 / 下 | 上一项 / 下一项 | 上一项 / 下一项（会停在「社区资源」这类分类标题上） |
+| 左 / 右 | 上一项 / 下一项 | 在当前项自带的按钮（如「刷新」「设置」）之间移动，左键回到列表项 |
+| Home / End | 第一项 / 最后一项 | 第一项 / 最后一项 |
+| 回车 / 空格 | 切换页面 | 切换页面 |
 
-## 💻 支持平台
+方向键只移动焦点，**按回车或空格才会切换页面**。列表到头后不会循环。
 
-| 操作系统 | 支持情况 | 环境要求 |
-|---|---|---|
-| Windows 10 1809 (17763) 或更高 | ✅ 完整支持 | [.NET 10 Desktop Runtime](https://get.dot.net/10) |
-| Windows 8 - Windows 10 1809 (17763) | ⚠️ 理论能跑，酌情提供社区支持 | [.NET 10 Desktop Runtime](https://get.dot.net/10) |
-| Windows 7 或更低版本 | ❌ 不支持 | / |
-| macOS / Linux / 其他操作系统 | ⚠️ 仅跨平台开发支持（交叉编译） | [.NET 10 SDK](https://get.dot.net/10) |
+### 其他控件
 
-**✅ 完整支持**：尽可能提供一切相关支持，但必须确保启动器为最新版本。
+| 控件 | 按键 |
+| --- | --- |
+| 滑块 | 左 / 下减小，右 / 上增大，PageUp / PageDown 大幅调整，Home / End 最小 / 最大，调整后读出新值 |
+| 可折叠的卡片 | 回车或空格展开 / 折叠，右键展开，左键折叠 |
+| 右键菜单（例如列表项的「设置」按钮） | 打开后焦点自动进入菜单，上下键选择，回车执行，Esc 关闭 |
+| 模组详情页的筛选栏 | 左右键在选项之间移动，回车应用筛选 |
 
-**⚠️ 理论能跑，酌情提供社区支持**：PCL CE 应该可以在这些平台上运行，但不保证功能完全可用。你可能需要升级到完整支持的系统版本以获得进一步社区技术支持。
+### 启动游戏
 
-**❌ 不支持**：PCL CE 在这些平台的可用性较低，甚至压根打不开。请升级操作系统以使用 PCL CE。
+- 打开启动器后，焦点默认在启动按钮上（有弹窗时会先等弹窗关闭）。
+- 只有焦点在启动按钮上时，按回车才会启动游戏，避免误触。
+- 在启动页，Tab 顺序和屏幕上从上到下一致：档案、启动按钮、实例选择、实例设置。
 
-**⚠️ 仅跨平台开发支持（交叉编译）**：PCL CE 的源代码可以在 macOS 与 Linux 平台编译，但无法直接运行。作为开发者，你可以在这些平台上进行开发，然后将编译产物转移到 Windows 系统测试。
+## 与上游 PCL CE 的区别
 
-**注**：    
-社区仅对最新版本的启动器提供支持。    
-取决于部分问题的特殊性（如系统不完整），有时你仍然必须升级操作系统以继续获得支持。    
-PCL CE 始终建议使用最新版本的操作系统以获得最佳体验。    
-你仍然可以尝试在不受支持的系统上使用 PCL CE，但可能会遇到很多额外问题。
+- **禁用了自动更新**。上游的更新包不含无障碍功能，安装后会把无障碍版覆盖掉。新版本请到交流群或本仓库的 Release 页面获取。
+- 设置页隐藏了「软件更新」和「反馈」。
+- 启动时会显示一次无障碍版的作者和交流群信息。
+- 其余功能与上游 PCL CE v2.15.0 相同，包括正版验证要求、正版购买劝导和赞助劝导。
 
-## 🔒 许可证
+## 系统要求
 
-- `Plain Craft Launcher 2/` 使用 [自定义许可证](https://github.com/PCL-Community/PCL-CE/blob/dev/Plain%20Craft%20Launcher%202/LICENCE)
-- `其余所有目录` 使用 [Apache License 2.0](https://github.com/PCL-Community/PCL-CE/blob/dev/LICENSE)
+- Windows 10 1809 或更高版本
+- [.NET 10 桌面运行时](https://get.dot.net/10)
+- 推荐使用 [NVDA](https://www.nvaccess.org/) 读屏
 
-## 🌟 统计数据
-![Alt](https://repobeats.axiom.co/api/embed/3e46296e6e3a134991a783480fd2f62723bb0353.svg "Repobeats analytics image")
+## 从源代码编译
 
-[![Star History Chart](https://api.star-history.com/svg?repos=PCL-Community/PCL-CE&type=Date)](https://www.star-history.com/#PCL-Community/PCL-CE&Date)
+需要 [.NET 10 SDK](https://get.dot.net/10)。在仓库根目录运行：
 
-**此页浏览量**（总计 / 今日）：[![Hits](https://hits.zkitefly.eu.org/?tag=https://github.com/PCL-Community/PCL-CE)](https://hits.zkitefly.eu.org/?tag=https://github.com/PCL-Community/PCL-CE&web=true)
-## ❤️ 贡献者
+```bash
+dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Release -p:Platform=x64
+```
 
-[![](https://contrib.rocks/image?repo=PCL-Community/PCL-CE)](https://github.com/PCL-Community/PCL-CE/graphs/contributors)
+编译前请先关闭正在运行的 PCL（PCL 同一时间只能运行一个）。
+
+**注意**：上游的正式版在编译时会注入一些密钥，包括微软正版登录用的 Client ID、CurseForge API Key、联机大厅服务器地址等。这些密钥不在源代码里，自行编译的版本缺少它们，所以**正版登录、CurseForge 下载源、联机大厅可能无法使用**。具体见 [ACCESSIBILITY.md](ACCESSIBILITY.md)。
+
+## 开发者文档
+
+无障碍修改的全部细节、对上游文件的修改清单、合并上游新版本的步骤和测试方法，都写在 [ACCESSIBILITY.md](ACCESSIBILITY.md) 里。`AccessTools/` 文件夹里是测试用的 UIA 脚本。
+
+## 许可与致谢
+
+- 本项目基于 [PCL CE](https://github.com/PCL-Community/PCL-CE)，PCL CE 基于龙腾猫跃的 [Plain Craft Launcher](https://github.com/Meloong-Git/PCL)。感谢 PCL 原作者和 PCL Community 的全体贡献者。
+- `Plain Craft Launcher 2/` 目录使用《PCL 分发有限许可》及《PCL 存储库合理使用指南》，见 [Plain Craft Launcher 2/LICENCE](Plain%20Craft%20Launcher%202/LICENCE)。
+- 其余目录使用 [Apache License 2.0](LICENSE)。
+- 本无障碍版免费提供，禁止任何形式的收费分发。

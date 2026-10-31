@@ -5,7 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [dev]
+    branches: [access]  # 无障碍版的开发分支
     paths-ignore: &ignored
       - '**/.editorconfig'
       - '**/.gitignore'

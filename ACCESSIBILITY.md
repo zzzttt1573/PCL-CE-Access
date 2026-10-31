@@ -11,10 +11,10 @@
 | --- | --- |
 | 上游仓库 | https://github.com/PCL-Community/PCL-CE |
 | 基于的上游版本 | **v2.15.0**（tag `v2.15.0`，提交 `12bb0ea2`）。刻意没有用 v2.15.1 |
-| 本地仓库 | `E:\vibe coding\projects\PCL-CE-Access` |
 | 开发分支 | `access`（所有无障碍修改都在这个分支上） |
-| 远程 | `origin` 指向上游 PCL-Community/PCL-CE；作者账号复刻上游时 GitHub 返回 403，暂未推送到个人仓库 |
-| 许可证 | Apache 2.0（发布时保留上游版权声明，并注明修改） |
+| 远程 | 克隆时 `origin` 指向上游 PCL-Community/PCL-CE；作者账号复刻上游时 GitHub 返回 403，改为新建仓库推送 |
+| 提交身份 | 使用 GitHub 隐私邮箱（`<ID>+<用户名>@users.noreply.github.com`），不要用个人邮箱 |
+| 许可证 | `Plain Craft Launcher 2/` 目录是《PCL 分发有限许可》+《PCL 存储库合理使用指南》（见该目录下的 `LICENCE`）；其余目录 Apache 2.0。见第 2.1 节 |
 | 目标读屏软件 | 主要测试 **NVDA**；同时兼容任何支持 UIA 的读屏（讲述人、争渡等） |
 | 无障碍版作者 | Dravokian，交流 QQ 群：704724210 |
 
@@ -30,6 +30,18 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 - 输出：`Plain Craft Launcher 2\bin\Debug\net10.0-windows\win-x64\Plain Craft Launcher 2.exe`
 - Debug 版每次启动都会弹出「特殊版本提示」对话框，这是上游行为，正好可以用来测试弹窗朗读。正式发布请用 Release 编译。
 - PCL **只允许运行一个实例**：编译前必须关闭正在运行的 PCL，否则复制文件失败（MSB3021/MSB3027），新开的实例也会自动退出。
+
+### 编译密钥（重要）
+
+上游正式版由 CI 编译，编译时通过环境变量注入密钥（`PCL_WRITE_SECRET=1` 加 `PCL_MS_CLIENT_ID`、`PCL_CURSEFORGE_API_KEY`、`PCL_NAID_CLIENT_ID`、`PCL_NAID_CLIENT_SECRET`、`PCL_LINK_SERVER_ROOT`、`PCL_LOBBY_DEFAULT_SECRET` 等，见 `.github/workflows/reusable-build.yml` 和 `PCL.Core/App/Secrets.cs`）。这些值**不在源代码里**。
+
+本地编译或在自己仓库的 CI 里编译时没有这些密钥，因此：
+
+- 微软正版登录可能无法使用（没有 OAuth Client ID）；
+- CurseForge 下载源不可用（Modrinth 不受影响）；
+- 联机大厅连不上（工具页会弹出「获取大厅公告失败」）。
+
+要让这些功能可用，需要自己申请对应的密钥，并在编译时以环境变量提供（或在 GitHub 仓库设置里配置同名 Secrets）。**不要把任何密钥写进源代码或提交到仓库。**
 
 ---
 
@@ -49,7 +61,18 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 7. **只有焦点在启动按钮上时回车才启动游戏**；启动后默认焦点放在启动按钮上，有弹窗时等弹窗关闭。
 8. **禁用自动更新**：上游更新包不含无障碍功能，安装后会覆盖本程序（曾经实际发生过）。
 9. **隐藏设置页的「软件更新」「反馈」**；启动时显示「无障碍版本作者：Dravokian，交流QQ群：704724210」。
-10. **不移除「需要先进行一次正版验证才能使用其他验证方式」的限制**（这是正版验证门槛，不属于无障碍范围）。
+
+### 2.1 许可证要求（发布前必须满足）
+
+`Plain Craft Launcher 2/LICENCE` 中的《PCL 存储库合理使用指南》把「基于本存储库进行修改」定为**重度使用**，要求：
+
+1. 明确表示是第三方基于 PCL 独立二次创作的产物（README 开头已写明）。
+2. 名称以 Plain Craft Launcher (PCL) 开头，并加上能表现第三方修改的后缀，不能暗示官方（窗口标题和 README 使用「PCL CE 无障碍版」）。
+3. 关于页面首位保留龙腾猫跃的署名和赞助链接；公开源代码；继续附带该指南文件。
+4. 保留与 `McLaunchPrecheck` 一致的正版购买劝导和赞助劝导。
+5. 不得有类似赞助解锁的功能，界面主色相保持蓝色。
+
+第 3～5 条来自上游代码，**修改时不要删除或绕过**。另外禁止收费分发。
 
 ---
 
@@ -124,6 +147,17 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 | `Pages/PageLaunch/PageLoginProfile.xaml` | `ItemsControl` → `local:AccessItemsControl` | 档案列表不再朗读「数据项目」和类名。**注意不要**加 `AccessList.IsList`，否则档案项里的「更改 UUID」等按钮无法到达 |
 | `Pages/PageDownload/Comp/PageDownloadCompDetail.xaml` | `PanInstanceFilter`、`PanModLoaderFilter` 加 `local:AccessList.IsList="True" local:AccessList.IsHorizontal="True"` | 模组详情页的「实例筛选」「模组加载器筛选」变成列表；列表标签自动取行首文字 |
 | `Pages/PageSetup/PageSetupLeft.xaml` | `ItemUpdate`、`ItemFeedback` 加 `Visibility="Collapsed"` | 隐藏「软件更新」「反馈」 |
+| `FormMain.xaml` | 窗口 `Title` 改为「PCL CE 无障碍版」 | 满足许可证对名称的要求；读屏切换窗口时读出这个名字 |
+
+### 4.4 仓库文件调整
+
+| 文件 | 修改 | 目的 |
+| --- | --- | --- |
+| `README.md` | 改为无障碍版说明 | 仓库首页介绍无障碍版，并满足许可证要求（声明第三方修改、名称） |
+| `README-PCL-CE.md` | 由上游 `README.md` 改名而来，内容不变 | 保留上游原始说明。合并上游时，上游对 `README.md` 的改动要手动同步到这个文件 |
+| `.github/workflows/release-*_publish.yml`、`mirrorchyan_*.yml` | 删除 | 上游的发布和上传流程依赖上游的密钥和发布渠道，不应在本仓库运行 |
+| `.github/FUNDING.yml`、`.github/ISSUE_TEMPLATE/` | 删除 | 赞助按钮指向上游作者、问题模板面向上游，避免访客误解 |
+| `.github/workflows/build-test.yml` | 触发分支 `dev` → `access` | 推送到 access 分支时做编译检查 |
 
 ---
 
@@ -171,7 +205,7 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 ## 6. 合并上游新版本的步骤
 
 1. 备份当前分支：`git branch access-backup-<日期>`。
-2. 获取上游 tag：`git fetch origin --tags`。
+2. 获取上游 tag：`git fetch upstream --tags`（`upstream` 指向 https://github.com/PCL-Community/PCL-CE ；没有的话先 `git remote add upstream <地址>`）。
 3. 在新 tag 上建分支并合并（或者 rebase）：
 
 ```bash
