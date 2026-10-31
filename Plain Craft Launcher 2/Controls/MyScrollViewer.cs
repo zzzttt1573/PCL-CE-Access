@@ -75,7 +75,8 @@ public class MyScrollViewer : ScrollViewer
 
     private void MyScrollViewer_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
-        if (e.NewFocus is MySlider)
+        // 无障碍版：只在鼠标点击时阻止，键盘导航（Tab）必须能让滑块获得焦点，否则 Tab 会卡在滑块前面
+        if (e.NewFocus is MySlider && InputManager.Current.MostRecentInputDevice is MouseDevice)
             e.Handled = true; // #3854，阻止获得焦点时自动滚动
     }
 }

@@ -161,6 +161,16 @@ public static class AccessList
         return true;
     }
 
+    /// <summary>
+    /// 焦点是否在弹出层里（右键菜单、下拉框列表等）。弹出层不在主窗口的界面树里，不能当成焦点丢失。
+    /// </summary>
+    public static bool IsFocusInPopup()
+    {
+        if (Keyboard.FocusedElement is not Visual focused || ModMain.frmMain is not { } window) return false;
+        var source = PresentationSource.FromVisual(focused);
+        return source is not null && !ReferenceEquals(source, PresentationSource.FromVisual(window));
+    }
+
     private static bool IsSelected(UIElement item) => item is IAccessibleControl { AccessIsSelected: true };
 
     /// <summary>
@@ -185,21 +195,33 @@ public static class AccessList
         var container = (UIElement)sender;
         // 文本框、下拉框、滑块自己需要方向键
         if (e.OriginalSource is TextBoxBase or ComboBox or MySlider) return;
-        // 横向和纵向列表都接管四个方向键：左 / 上 = 上一项，右 / 下 = 下一项。
-        // 不接管的话，WPF 自带的方向导航会把焦点挪进列表项内部的小按钮（例如「刷新」），而且回不来
+        // 四个方向键都要接管，否则 WPF 自带的方向导航会把焦点挪到别处而且回不来。
+        // 横向列表：左 / 上 = 上一项，右 / 下 = 下一项。
+        // 纵向列表：上下在列表项之间移动；左右在当前项自带的按钮（例如「刷新」「设置」）之间移动。
+        var horizontal = GetIsHorizontal(container);
         var step = e.Key switch
         {
-            Key.Up or Key.Left => -1,
-            Key.Down or Key.Right => 1,
+            Key.Up => -1,
+            Key.Down => 1,
+            Key.Left when horizontal => -1,
+            Key.Right when horizontal => 1,
             Key.Home => int.MinValue,
             Key.End => int.MaxValue,
             _ => 0
         };
-        if (step == 0) return;
 
         var items = GetItems(container);
         if (items.Count == 0) return;
         var current = FindItem(items, e.OriginalSource as DependencyObject);
+
+        if (step == 0)
+        {
+            if (horizontal || e.Key is not (Key.Left or Key.Right)) return;
+            e.Handled = true;
+            if (current is not null) MoveWithinItem(current, e.OriginalSource as DependencyObject, e.Key == Key.Right);
+            return;
+        }
+
         var index = current is null ? -1 : items.IndexOf(current);
         var target = step switch
         {
@@ -219,13 +241,43 @@ public static class AccessList
     }
 
     /// <summary>
+    /// 纵向列表里用左右方向键在列表项和它自带的按钮之间移动：
+    /// 列表项 → 第一个按钮 → 第二个按钮……；左键反向，从第一个按钮回到列表项本身。
+    /// </summary>
+    private static void MoveWithinItem(UIElement item, DependencyObject? focused, bool forward)
+    {
+        // 按钮是鼠标悬停时才生成的，焦点进入列表项时已生成；这里只取已经存在的
+        var buttons = new List<UIElement>();
+        Collect(item, buttons);
+        if (buttons.Count == 0) return;
+        var position = -1;
+        for (var current = focused; current is not null && !ReferenceEquals(current, item);
+             current = VisualTreeHelper.GetParent(current))
+            if (current is UIElement element && buttons.Contains(element))
+            {
+                position = buttons.IndexOf(element);
+                break;
+            }
+
+        if (forward)
+        {
+            if (position < buttons.Count - 1) MoveFocus(buttons[position + 1]);
+        }
+        else if (position > 0)
+            MoveFocus(buttons[position - 1]);
+        else if (position == 0)
+            MoveFocus(item);
+    }
+
+    /// <summary>
     /// 用 Tab 从列表外进入时，焦点落在当前选中项上，而不是第一项或上次停留的项。
     /// </summary>
     private static void OnPreviewGotFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         var container = (UIElement)sender;
         if (e.OldFocus is DependencyObject old && FindContainer(old) == container) return;
-        if (InputManager.Current.MostRecentInputDevice is not KeyboardDevice) return;
+        // 只在按 Tab 进入时跳到选中项；关闭菜单后焦点回到列表里的按钮等情况不处理
+        if (!Keyboard.IsKeyDown(Key.Tab)) return;
         var items = GetItems(container);
         var selected = items.FirstOrDefault(IsSelected);
         if (selected is null || ReferenceEquals(selected, e.NewFocus)) return;
@@ -343,10 +395,18 @@ public partial class FormMain
     private void RestoreLostFocus()
     {
         if (!IsActive || accessLastFocusRegion is null) return;
-        if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any()) return;
+        if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any() || AccessList.IsFocusInPopup()) return;
         if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, this) && focused.IsVisible &&
             IsAncestorOf(focused))
             return;
+        // 回到启动页时，焦点优先放在启动按钮上
+        if (ModMain.frmLaunchLeft is { IsVisible: true } launch && launch.BtnLaunch.IsEnabled &&
+            accessLastFocusRegion.IsAncestorOf(launch))
+        {
+            launch.BtnLaunch.Focus();
+            return;
+        }
+
         AccessList.FocusEntry(accessLastFocusRegion);
     }
 
@@ -372,7 +432,7 @@ public partial class FormMain
                 }
 
                 // 弹窗中，焦点交给弹窗
-                if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any()) return;
+                if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any() || AccessList.IsFocusInPopup()) return;
                 var button = ModMain.frmLaunchLeft?.BtnLaunch;
                 // 焦点已经在启动按钮上：继续观察，防止随后弹出的弹窗关闭后焦点丢失
                 if (button is not null && button.IsKeyboardFocused) return;
@@ -437,7 +497,7 @@ public partial class MyPageLeft
                 }
 
                 // 有弹窗时焦点交给弹窗，弹窗关闭后再看
-                if (window.PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any()) return;
+                if (window.PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any() || AccessList.IsFocusInPopup()) return;
                 if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, window) &&
                     focused.IsVisible && window.IsAncestorOf(focused))
                 {

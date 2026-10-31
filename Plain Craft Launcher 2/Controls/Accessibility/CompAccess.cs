@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 // 社区资源（模组、整合包、资源包等）列表项的无障碍实现。
 // 名称为资源标题，说明为简介和版本、下载量、更新时间、来源、标签等信息；回车或空格打开详情。
@@ -9,7 +10,25 @@ namespace PCL;
 
 public partial class MyCompItem : IAccessibleControl
 {
-    static MyCompItem() => AccessHelper.RegisterControl(typeof(MyCompItem));
+    static MyCompItem()
+    {
+        AccessHelper.RegisterControl(typeof(MyCompItem));
+        // 「快速下载」「收藏」按钮的点击处理要求按钮区可见（透明度大于 0），而按钮区平时只在鼠标悬停时淡入。
+        // 键盘焦点进入这一项时显示按钮区，离开时（且鼠标不在上面）再隐藏，这样键盘也能触发这两个按钮
+        EventManager.RegisterClassHandler(typeof(MyCompItem), GotKeyboardFocusEvent,
+            new KeyboardFocusChangedEventHandler((sender, _) =>
+            {
+                var item = (MyCompItem)sender;
+                if (item.PanButtons is not null && item._HasActionButtons) item.PanButtons.Opacity = 1d;
+            }));
+        EventManager.RegisterClassHandler(typeof(MyCompItem), LostKeyboardFocusEvent,
+            new KeyboardFocusChangedEventHandler((sender, _) =>
+            {
+                var item = (MyCompItem)sender;
+                if (item.PanButtons is null || item.IsKeyboardFocusWithin || item.IsMouseOver) return;
+                item.PanButtons.Opacity = 0d;
+            }));
+    }
 
     protected override AutomationPeer OnCreateAutomationPeer() => new AccessPeer(this);
 

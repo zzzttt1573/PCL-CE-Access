@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 // 各自绘控件的无障碍实现。全部放在 partial 文件中，尽量不改动上游源码。
@@ -225,7 +226,23 @@ public partial class MyListItem : IAccessibleControl
 
     string? IAccessibleControl.AccessName => Title;
 
-    string? IAccessibleControl.AccessHelpText => Info;
+    // 说明文字 + 标签（例如实例列表里的「26.2」「Fabric 0.19.3」）
+    string? IAccessibleControl.AccessHelpText
+    {
+        get
+        {
+            // 标签容器是用到时才创建的，这里只在已有的子元素里找，不触发创建
+            var tags = PanBack.Children.OfType<StackPanel>()
+                .Where(panel => panel.Visibility == Visibility.Visible)
+                .SelectMany(panel => panel.Children.OfType<Border>())
+                .Select(border => (border.Child as TextBlock)?.Text)
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .ToList();
+            var parts = new List<string?> { Info?.Replace(" | ", "，") };
+            parts.AddRange(tags);
+            return string.Join("，", parts.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!.Trim()));
+        }
+    }
 
     ToggleState? IAccessibleControl.AccessToggleState =>
         Type == CheckType.CheckBox ? AccessHelper.ToToggleState(Checked) : null;
