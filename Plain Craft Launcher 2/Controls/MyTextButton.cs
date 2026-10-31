@@ -4,7 +4,7 @@ using System.Windows.Input;
 
 namespace PCL;
 
-public class MyTextButton : Label
+public partial class MyTextButton : Label
 {
     public delegate void ClickEventHandler(object sender, EventArgs e);
 
