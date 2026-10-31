@@ -418,6 +418,7 @@ public partial class FormMain
     private void FocusLaunchButtonOnStartup()
     {
         var startTime = DateTime.Now;
+        DateTime? noDialogSince = null;
         var timer = new System.Windows.Threading.DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(300)
@@ -433,7 +434,13 @@ public partial class FormMain
                 }
 
                 // 弹窗中，焦点交给弹窗
-                if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any() || AccessList.IsFocusInPopup()) return;
+                if (PanMsg.Children.Count > 0 || ModMain.WaitingMyMsgBox.Any() || AccessList.IsFocusInPopup())
+                {
+                    noDialogSince = null;
+                    return;
+                }
+
+                noDialogSince ??= DateTime.Now;
                 var button = ModMain.frmLaunchLeft?.BtnLaunch;
                 // 焦点已经在启动按钮上：继续观察，防止随后弹出的弹窗关闭后焦点丢失
                 if (button is not null && button.IsKeyboardFocused) return;
@@ -445,8 +452,17 @@ public partial class FormMain
                     return;
                 }
 
-                if (button is null || !button.IsVisible || !button.IsEnabled || !IsActive) return;
-                button.Focus();
+                if (!IsActive) return;
+                if (button is { IsVisible: true, IsEnabled: true })
+                {
+                    button.Focus();
+                    return;
+                }
+
+                // 启动按钮不可用（例如还没有选择档案）：弹窗都关闭 2 秒后仍不可用，就把焦点放到启动页左侧第一个控件（档案区）
+                if (DateTime.Now - noDialogSince < TimeSpan.FromSeconds(2) || ModMain.frmLaunchLeft is not { IsVisible: true } launch)
+                    return;
+                if (AccessList.FocusEntry(launch)) timer.Stop();
             }
             catch (Exception ex)
             {
