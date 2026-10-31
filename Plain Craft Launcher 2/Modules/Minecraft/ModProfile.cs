@@ -349,11 +349,9 @@ public static class ModProfile
             var hasMinecraftAccount = profileList.Any(x => x.Type == ModLaunch.McLoginType.Ms);
             var restricted = Lang.IsFeaturesUnrestricted && profileList.Count > 0;
             var hasNetwork = NetworkHelper.IsNetworkAvailable();
-            if (hasMinecraftAccount || restricted || !hasNetwork)
-                authTypeList = _GetAvailableProfileSelection(true);
-            else
-                authTypeList = _GetAvailableProfileSelection(false);
-            
+            var includeOfflineAndThirdParty = AccessBuild.AllowAllLoginTypesOnFirstUse ||
+                                              hasMinecraftAccount || restricted || !hasNetwork;
+            authTypeList = _GetAvailableProfileSelection(includeOfflineAndThirdParty);
 #endif
         
             selectedAuthTypeNum = ModMain.MyMsgBoxSelect(authTypeList, Lang.Text("Launch.Account.Profile.Create.SelectAuthType.Title"), Lang.Text("Common.Action.Continue"), Lang.Text("Common.Action.Cancel"));
