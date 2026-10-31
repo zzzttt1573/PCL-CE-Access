@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
+using System.Windows.Input;
 
 // 各自绘控件的无障碍实现。全部放在 partial 文件中，尽量不改动上游源码。
 // AccessInvoke 的写法都是：先把控件的「鼠标已按下」标记置为 true，再调用原有的鼠标抬起处理，
@@ -200,6 +201,16 @@ public partial class MyListItem : IAccessibleControl
             var item = (MyListItem)sender;
             item.Focusable = item.Type != CheckType.None;
         }));
+        // 列表项内部的操作按钮（例如档案的「更改 UUID」）是鼠标第一次悬停时才生成的，
+        // 键盘用户不会悬停，所以获得焦点时也要生成
+        EventManager.RegisterClassHandler(typeof(MyListItem), GotKeyboardFocusEvent,
+            new KeyboardFocusChangedEventHandler((sender, e) =>
+            {
+                var item = (MyListItem)sender;
+                if (item.ContentHandler is null) return;
+                item.ContentHandler.Invoke(item, e);
+                item.ContentHandler = null;
+            }));
     }
 
     protected override AutomationPeer OnCreateAutomationPeer() => new AccessPeer(this);

@@ -6,7 +6,8 @@
                   xmlns:local="clr-namespace:PCL"
                   mc:Ignorable="d" x:Name="PanBack"
                   d:DesignHeight="417.2" Width="300">
-    <Grid Name="PanInput" RenderTransformOrigin="0.5,0.5">
+    <!-- 无障碍：Tab 顺序按屏幕从上到下：档案、启动按钮、实例选择、实例设置 -->
+    <Grid Name="PanInput" RenderTransformOrigin="0.5,0.5" KeyboardNavigation.TabNavigation="Local">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
@@ -24,13 +25,15 @@
         <Grid.RenderTransform>
             <ScaleTransform />
         </Grid.RenderTransform>
-        <local:MyButton Grid.Row="3" Grid.Column="2" x:Name="BtnInstance" Height="35" Margin="0,10,10,0" Text="{DynamicResource Launch.Home.SelectInstance}"
+        <local:MyButton Grid.Row="3" Grid.Column="2" x:Name="BtnInstance" KeyboardNavigation.TabIndex="2" Height="35" Margin="0,10,10,0" Text="{DynamicResource Launch.Home.SelectInstance}"
                         IsEnabled="False" Click="BtnInstance_Click" />
-        <local:MyButton Grid.Row="3" Grid.Column="3" x:Name="BtnMore" Visibility="Collapsed" Height="35"
+        <local:MyButton Grid.Row="3" Grid.Column="3" x:Name="BtnMore" KeyboardNavigation.TabIndex="3" Visibility="Collapsed" Height="35"
                         Click="BtnMore_Click"
                         Margin="0,10,10,0" TextPadding="36" Text="{DynamicResource Launch.Home.InstanceSettings}" />
-        <Grid Grid.ColumnSpan="5" Grid.Row="1" Margin="20,0" VerticalAlignment="Center" x:Name="PanLogin" />
-        <Grid Grid.ColumnSpan="5" Grid.Row="2" RenderTransformOrigin="0.5,0.5">
+        <Grid Grid.ColumnSpan="5" Grid.Row="1" Margin="20,0" VerticalAlignment="Center" x:Name="PanLogin"
+              KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="0" />
+        <Grid Grid.ColumnSpan="5" Grid.Row="2" RenderTransformOrigin="0.5,0.5"
+              KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="1">
             <Grid.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform x:Name="AprilScaleTrans" />

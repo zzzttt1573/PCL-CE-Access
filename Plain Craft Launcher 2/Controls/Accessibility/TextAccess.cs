@@ -158,7 +158,15 @@ public static class AccessText
             string.Equals(textBlock.Text?.Trim(), card.Title.Trim(), StringComparison.Ordinal))
             return false;
 
-        return !IsNavigationHeading(textBlock) && !IsControlLabel(textBlock);
+        // 左侧导航的分类标题（例如「社区资源」「安装包」）：作为标题朗读，方向键可以停在上面
+        if (IsNavigationHeading(textBlock))
+        {
+            System.Windows.Automation.AutomationProperties.SetHeadingLevel(textBlock,
+                System.Windows.Automation.AutomationHeadingLevel.Level2);
+            return true;
+        }
+
+        return !IsControlLabel(textBlock);
     }
 
     /// <summary>

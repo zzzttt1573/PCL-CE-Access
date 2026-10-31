@@ -65,9 +65,30 @@ public static class AccessList
         }
     }
 
+    /// <summary>列表的标签，例如「实例筛选：」。不设置时使用容器里第一个文字。读屏会在列表项后面作为说明朗读。</summary>
+    public static readonly DependencyProperty LabelProperty = DependencyProperty.RegisterAttached(
+        "Label", typeof(string), typeof(AccessList), new PropertyMetadata(null));
+
+    public static string? GetLabel(DependencyObject d) => (string?)d.GetValue(LabelProperty);
+    public static void SetLabel(DependencyObject d, string? value) => d.SetValue(LabelProperty, value);
+
     #endregion
 
     #region 列表项
+
+    /// <summary>
+    /// 列表项所在列表的标签；不在列表中或列表没有标签时返回 null。
+    /// </summary>
+    public static string? GetLabelFor(UIElement item)
+    {
+        var container = FindContainer(VisualTreeHelper.GetParent(item));
+        if (container is null) return null;
+        if (GetLabel(container) is { } label) return label;
+        if (container is not Panel panel) return null;
+        var text = panel.Children.OfType<TextBlock>()
+            .FirstOrDefault(t => t.Visibility == Visibility.Visible && !string.IsNullOrWhiteSpace(t.Text))?.Text;
+        return text?.Trim().TrimEnd('：', ':');
+    }
 
     /// <summary>
     /// 按界面顺序取出容器内所有可获得焦点的列表项（不进入列表项内部）。
@@ -114,6 +135,32 @@ public static class AccessList
         return null;
     }
 
+    /// <summary>
+    /// 把焦点放进一个区域：有选中项时放到选中项，否则按 Tab 顺序放到第一个控件。
+    /// </summary>
+    public static bool FocusEntry(UIElement region)
+    {
+        var items = GetItems(region);
+        var selected = items.FirstOrDefault(IsSelected);
+        if (selected is not null)
+        {
+            MoveFocus(selected);
+            return true;
+        }
+
+        if (region.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)) &&
+            Keyboard.FocusedElement is DependencyObject focused && region.IsAncestorOf(focused))
+        {
+            (focused as FrameworkElement)?.BringIntoView();
+            return true;
+        }
+
+        var first = items.FirstOrDefault();
+        if (first is null) return false;
+        MoveFocus(first);
+        return true;
+    }
+
     private static bool IsSelected(UIElement item) => item is IAccessibleControl { AccessIsSelected: true };
 
     /// <summary>
@@ -138,13 +185,12 @@ public static class AccessList
         var container = (UIElement)sender;
         // 文本框、下拉框、滑块自己需要方向键
         if (e.OriginalSource is TextBoxBase or ComboBox or MySlider) return;
-        var horizontal = GetIsHorizontal(container);
+        // 横向和纵向列表都接管四个方向键：左 / 上 = 上一项，右 / 下 = 下一项。
+        // 不接管的话，WPF 自带的方向导航会把焦点挪进列表项内部的小按钮（例如「刷新」），而且回不来
         var step = e.Key switch
         {
-            Key.Up => -1,
-            Key.Down => 1,
-            Key.Left when horizontal => -1,
-            Key.Right when horizontal => 1,
+            Key.Up or Key.Left => -1,
+            Key.Down or Key.Right => 1,
             Key.Home => int.MinValue,
             Key.End => int.MaxValue,
             _ => 0
@@ -196,10 +242,12 @@ public static class AccessList
         var items = GetItems(container);
         var item = FindItem(items, e.NewFocus as DependencyObject);
         if (item is null) return;
-        for (var i = 0; i < items.Count; i++)
+        // 分类标题不计入「第几项 / 共几项」
+        var realItems = items.Where(i => i is not TextBlock).ToList();
+        for (var i = 0; i < realItems.Count; i++)
         {
-            AutomationProperties.SetPositionInSet(items[i], i + 1);
-            AutomationProperties.SetSizeOfSet(items[i], items.Count);
+            AutomationProperties.SetPositionInSet(realItems[i], i + 1);
+            AutomationProperties.SetSizeOfSet(realItems[i], realItems.Count);
         }
     }
 
@@ -299,12 +347,7 @@ public partial class FormMain
         if (Keyboard.FocusedElement is UIElement focused && !ReferenceEquals(focused, this) && focused.IsVisible &&
             IsAncestorOf(focused))
             return;
-        var items = AccessList.GetItems(accessLastFocusRegion);
-        var target = items.FirstOrDefault(item => item is IAccessibleControl { AccessIsSelected: true })
-                     ?? items.FirstOrDefault();
-        if (target is null) return;
-        (target as FrameworkElement)?.BringIntoView();
-        target.Focus();
+        AccessList.FocusEntry(accessLastFocusRegion);
     }
 
     /// <summary>
@@ -402,15 +445,14 @@ public partial class MyPageLeft
                     return;
                 }
 
-                var items = AccessList.GetItems(this);
-                UIElement? target = this is PageLaunchLeft launch && launch.BtnLaunch.IsEnabled
-                    ? launch.BtnLaunch
-                    : items.FirstOrDefault(item => item is IAccessibleControl { AccessIsSelected: true })
-                      ?? items.FirstOrDefault();
-                if (target is null) return;
-                timer.Stop();
-                (target as FrameworkElement)?.BringIntoView();
-                target.Focus();
+                if (this is PageLaunchLeft launch && launch.BtnLaunch.IsEnabled)
+                {
+                    timer.Stop();
+                    launch.BtnLaunch.Focus();
+                    return;
+                }
+
+                if (AccessList.FocusEntry(this)) timer.Stop();
             }
             catch (Exception ex)
             {

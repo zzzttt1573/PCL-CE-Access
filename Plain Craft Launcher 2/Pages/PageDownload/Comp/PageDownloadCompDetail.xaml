@@ -49,9 +49,9 @@
             <StackPanel Grid.Row="1" Grid.RowSpan="2" Name="PanMain" Grid.IsSharedSizeScope="True">
                 <local:MyCard Margin="0,0,0,15" x:Name="CardFilter">
                     <StackPanel>
-                        <StackPanel x:Name="PanInstanceFilter" Margin="10,10,0,5" Orientation="Horizontal"
+                        <StackPanel x:Name="PanInstanceFilter" local:AccessList.IsList="True" local:AccessList.IsHorizontal="True" Margin="10,10,0,5" Orientation="Horizontal"
                                     VerticalAlignment="Top" HorizontalAlignment="Left" />
-                        <StackPanel x:Name="PanModLoaderFilter" Margin="10,5,0,10" Orientation="Horizontal"
+                        <StackPanel x:Name="PanModLoaderFilter" local:AccessList.IsList="True" local:AccessList.IsHorizontal="True" Margin="10,5,0,10" Orientation="Horizontal"
                                     VerticalAlignment="Top" HorizontalAlignment="Left" />
                     </StackPanel>
                 </local:MyCard>

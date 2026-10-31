@@ -27,16 +27,16 @@
 
     <local:MyScrollViewer Grid.Row="3" MaxHeight="300" Margin="10,0,10,0">
         <!-- 世界需要 MVVM -->
-        <ItemsControl ItemsSource="{Binding ProfileCollection}">
-            <ItemsControl.ItemTemplate>
+        <local:AccessItemsControl ItemsSource="{Binding ProfileCollection}">
+            <local:AccessItemsControl.ItemTemplate>
                 <DataTemplate>
                     <local:MyListItem Margin="8,2,10,2"
                                       Title="{Binding Username}" Info="{Binding Info}"
                                       Type="Clickable" Logo="{Binding Logo}" SvgIcon="{Binding SvgIcon}" Tag="{Binding Profile}"
                                       Click="SelectProfile" ContentHandler="ProfileContMenuBuild" />
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </local:AccessItemsControl.ItemTemplate>
+        </local:AccessItemsControl>
     </local:MyScrollViewer>
 
     <local:MyCard Grid.Row="5" HorizontalAlignment="Center" x:Name="PanButtons" Opacity="10"

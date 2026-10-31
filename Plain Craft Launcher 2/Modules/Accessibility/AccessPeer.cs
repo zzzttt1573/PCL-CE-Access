@@ -58,7 +58,11 @@ public sealed class AccessPeer(FrameworkElement owner)
     protected override string GetHelpTextCore()
     {
         var help = base.GetHelpTextCore();
-        return string.IsNullOrWhiteSpace(help) ? Control.AccessHelpText?.Trim() ?? "" : help;
+        if (string.IsNullOrWhiteSpace(help)) help = Control.AccessHelpText?.Trim() ?? "";
+        // 列表的标签（例如「实例筛选」）作为补充说明
+        var listLabel = AccessList.GetLabelFor(Owner);
+        if (string.IsNullOrWhiteSpace(listLabel)) return help;
+        return string.IsNullOrWhiteSpace(help) ? listLabel : $"{listLabel}，{help}";
     }
 
     protected override bool IsControlElementCore() => true;
