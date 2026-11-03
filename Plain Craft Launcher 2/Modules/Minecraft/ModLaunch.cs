@@ -2634,7 +2634,7 @@ public static class ModLaunch
         if (McLaunchUsesLwjglUnsafeAgent(ModInstanceList.McMcInstanceSelected))
         {
             ModBase.Log($"获取到的 LWJGL 版本：{McLaunchGetLwjglVersion(ModInstanceList.McMcInstanceSelected)}");
-            dataList.Insert(0, $"-javaagent:\"{ModBase.pathPure}lwjgl-unsafe-agent.jar\"");
+            dataList.Insert(0, $"-javaagent:\"{Path.Combine(ModBase.pathPure, "lwjgl-unsafe-agent.jar")}\"");
         }
 
         if (Config.Instance.UseDebugLof4j2Config[instance.PathIndie])
