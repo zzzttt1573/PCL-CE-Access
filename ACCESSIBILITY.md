@@ -89,6 +89,7 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 | `AccessPeer.cs` | `IAccessibleControl` 接口 + 通用节点 `AccessPeer`（支持 Invoke / Toggle / SelectionItem 模式）+ `AccessHelper`（空格回车激活、模拟鼠标抬起、标签查找 `FindLabel`、文本框 / 下拉框命名、图标名映射）。 |
 | `AccessList.cs` | 列表导航（附加属性 `AccessList.IsList / IsHorizontal / ItemRole / Label`）；主窗口区域导航、标题栏按钮去焦点、焦点丢失恢复、启动按钮默认焦点（`FormMain` partial）；左侧页面自动变列表、切页后焦点恢复（`MyPageLeft` partial）。 |
 | `AccessBuild.cs` | 无障碍版的构建开关和文字：`EnterLaunchesAnywhere`、`HideUpdateAndFeedback`、`AboutHint`、`BlockSelfUpdate()`、`ShowAboutHintOnStartup()`。 |
+| `AccessPaste.cs` | 用 Ctrl+V 代替拖拽（`FormMain` partial）：主窗口里按 Ctrl+V，把剪贴板里的文件交给上游的拖拽处理 `FileDrag`（安装整合包、模组等）。支持资源管理器复制的文件、「复制文件地址」得到的路径文本（可多行、带引号），其他文本交给 `HandleDropData`（authlib-injector 链接、`file:///` 地址）。焦点在输入框里、有弹窗或弹出菜单时不拦截。 |
 
 ### `Plain Craft Launcher 2/Controls/Accessibility/`
 
@@ -133,6 +134,7 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Debug -p:
 | --- | --- | --- |
 | `Modules/Updates/UpdateManager.cs` | `UpdateStart` 和 `UpdateRestart` 开头各加一行 `if (AccessBuild.BlockSelfUpdate(...)) return;` | 禁用自动更新，防止上游更新包覆盖无障碍版 |
 | `FormMain.xaml.cs`（`FormMain_KeyDown` 里「调用启动游戏」） | 条件前加 `AccessBuild.EnterLaunchesAnywhere &&` | 关闭「启动页任意位置回车启动游戏」 |
+| `FormMain.xaml.cs`（`FrmMain_Drop`） | 原方法体移到新方法 `HandleDropData(IDataObject data)`，返回 `DragDropEffects`（`None` 表示未识别）；`FrmMain_Drop` 只负责设置 `e.Handled` / `e.Effects` | 让 Ctrl+V 粘贴复用拖拽的识别逻辑。合并上游时，上游对拖拽逻辑的改动要同步到 `HandleDropData` |
 | `Modules/UI/HintService.cs`（`Hint` 方法） | 加 `AccessSpeech.Speak(normalized);` | 右下角提示自动朗读 |
 | `Controls/MyScrollViewer.cs`（`MyScrollViewer_PreviewGotKeyboardFocus`） | 条件加 `&& InputManager.Current.MostRecentInputDevice is MouseDevice` | 上游（#3854）禁止滑块获得焦点，导致 Tab 卡在滑块前；改为只在鼠标点击时禁止 |
 | `Pages/PageSetup/PageSetupUI.xaml.cs`（功能隐藏刷新） | `ItemUpdate`、`ItemFeedback` 的可见性加 `AccessBuild.HideUpdateAndFeedback ||` | 始终隐藏「软件更新」「反馈」 |

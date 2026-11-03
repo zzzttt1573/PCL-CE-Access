@@ -913,32 +913,42 @@ public partial class FormMain
 
     private void FrmMain_Drop(object sender, DragEventArgs e)
     {
+        // 无障碍版：拖拽处理拆分到 HandleDropData，Ctrl+V 粘贴文件时复用（见 AccessPaste.cs）
+        var effects = HandleDropData(e.Data);
+        if (effects == DragDropEffects.None) return;
+        e.Handled = true;
+        e.Effects = effects;
+    }
+
+    /// <summary>
+    /// 处理拖入（或粘贴）的数据。返回 None 表示没有识别出可处理的内容。
+    /// </summary>
+    private DragDropEffects HandleDropData(IDataObject data)
+    {
         try
         {
-            if (e.Data.GetDataPresent(DataFormats.Text))
+            if (data.GetDataPresent(DataFormats.Text))
             {
                 // 获取文本
                 try
                 {
-                    var str = (string)e.Data.GetData(DataFormats.Text);
+                    var str = (string)data.GetData(DataFormats.Text);
                     ModBase.Log("[System] 接受文本拖拽：" + str);
                     if (str.StartsWithF("authlib-injector:yggdrasil-server:"))
                     {
                         // Authlib 拖拽
-                        e.Handled = true;
-                        e.Effects = DragDropEffects.Copy;
                         var authlibServer =
                             WebUtility.UrlDecode(str.Substring("authlib-injector:yggdrasil-server:".Length));
                         ModBase.Log("[System] Authlib 拖拽：" + authlibServer);
                         if (!new HttpValidator().Validate(authlibServer).IsValid)
                         {
                             HintService.Hint(Lang.Text("Main.FileDrag.AuthlibInvalid", authlibServer), HintType.Error);
-                            return;
+                            return DragDropEffects.Copy;
                         }
 
                         if (ModMain.MyMsgBox(Lang.Text("Main.FileDrag.CreateAuthlibProfile", authlibServer), Lang.Text("Main.FileDrag.CreateAuthlibProfileTitle"),
                                 Lang.Text("Common.Action.Confirm"), Lang.Text("Common.Action.Cancel")) == 2)
-                            return;
+                            return DragDropEffects.Copy;
                         ModProfile.selectedProfile = null;
                         ModBase.RunInUi(() =>
                         {
@@ -948,14 +958,14 @@ public partial class FormMain
                         if (pageCurrent == PageType.InstanceSetup && PageCurrentSub == PageSubType.VersionSetup)
                             // 正在服务器选项页，需要刷新设置项显示
                             ModMain.frmInstanceSetup.Reload();
+                        return DragDropEffects.Copy;
                     }
                     else if (str.StartsWithF("file:///"))
                     {
                         // 文件拖拽（例如从浏览器下载窗口拖入）
                         var filePath = WebUtility.UrlDecode(str).Substring("file:///".Length).Replace("/", @"\");
-                        e.Handled = true;
-                        e.Effects = DragDropEffects.Copy;
                         FileDrag(new List<string> { filePath });
+                        return DragDropEffects.Copy;
                     }
                 }
                 catch (Exception ex)
@@ -963,19 +973,18 @@ public partial class FormMain
                     ModBase.Log(ex, "无法接取文本拖拽事件", ModBase.LogLevel.Developer);
                 }
             }
-            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            else if (data.GetDataPresent(DataFormats.FileDrop))
             {
                 // 获取文件并检查
-                var filePathRaw = e.Data.GetData(DataFormats.FileDrop);
+                var filePathRaw = data.GetData(DataFormats.FileDrop);
                 if (filePathRaw is null) // #2690
                 {
                     HintService.Hint(Lang.Text("Main.FileDrag.ExtractFirst"), HintType.Error);
-                    return;
+                    return DragDropEffects.Link;
                 }
 
-                e.Handled = true;
-                e.Effects = DragDropEffects.Link;
                 FileDrag((IEnumerable<string>)filePathRaw);
+                return DragDropEffects.Link;
             }
         }
         catch (Exception ex)
@@ -986,6 +995,8 @@ public partial class FormMain
                 ModBase.LogLevel.Feedback,
                 userSummary: Lang.Text("Main.Error.OperationFailed"));
         }
+
+        return DragDropEffects.None;
     }
 
     private void FileDrag(IEnumerable<string> filePathList)

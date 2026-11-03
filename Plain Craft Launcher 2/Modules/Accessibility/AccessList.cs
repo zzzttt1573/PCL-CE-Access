@@ -343,6 +343,7 @@ public partial class FormMain
             // 标题栏不扫描，避免标题文字变成多余的 Tab 停留点
             AccessText.WatchWindow(this, PanMain, PanMsg);
             WatchFocusLoss();
+            SetupAccessPaste();
             FocusLaunchButtonOnStartup();
             AccessBuild.ShowAboutHintOnStartup();
         }
